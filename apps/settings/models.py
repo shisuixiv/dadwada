@@ -23,45 +23,19 @@ class Library(models.Model):
         verbose_name_plural = 'Библиотеки'
 
 
-class AuthorManager(BaseUserManager):
-    def create_author(self, email, password=None, **extra_fields):
-        """Создание обычного автора"""
-        if not email:
-            raise ValueError("У автора должен быть email")
-        email = self.normalize_email(email)
-        author = self.model(email=email, **extra_fields)
-        author.set_password(password)
-        author.save(using=self._db)
-        return author
-
-    def create_superauthor(self, email, password=None, **extra_fields):
-        """Создание супер-автора"""
-        extra_fields.setdefault("is_staff", True)
-        extra_fields.setdefault("is_superuser", True)
-
-        if extra_fields.get("is_staff") is not True:
-            raise ValueError("Суперавтор должен иметь is_staff=True.")
-        if extra_fields.get("is_superuser") is not True:
-            raise ValueError("Суперавтор должен иметь is_superuser=True.")
-
-        return self.create_author(email, password, **extra_fields)
 
 
-class Author(AbstractBaseUser, PermissionsMixin):
-    email = models.EmailField(unique=True, verbose_name="Email автора")
-    name = models.CharField(max_length=150, verbose_name="Имя автора")
+from django.db import models
+from apps.users.models import User   # 👈 связь с User
+
+
+class Author(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="author_profile")
     bio = models.TextField(blank=True, null=True, verbose_name="Биография")
 
-    is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=False)
-
-    objects = AuthorManager()
-
-    USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ["name"]
-
     def __str__(self):
-        return self.name
+        return self.user.name
+
 
     
 
